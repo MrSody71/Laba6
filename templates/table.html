@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <table border="1">
+        <tr>
+            <th>Имя</th>
+            <th>Возраст</th>
+            <th>Город</th>
+        </tr>
+        {% for item in data %}
+        <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.age }}</td>
+            <td>{{ item.city }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>
