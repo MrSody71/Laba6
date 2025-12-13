@@ -1,93 +1,19 @@
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
+from pathlib import Path
 
 app = FastAPI()
-
 connected_users = []
 
-html_page = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Простой чат</title>
-</head>
-<body>
-    <h2>WebSocket Чат</h2>
-    <div>
-        <input type="text" id="username" placeholder="Ваше имя" value="Аноним">
-        <button onclick="connectWebSocket()">Подключиться</button>
-    </div>
-    <div>
-        <input type="text" id="messageInput" placeholder="Сообщение" disabled>
-        <button onclick="sendMessage()" disabled id="sendBtn">Отправить</button>
-    </div>
-    <div id="chatMessages" style="border:1px solid #ccc;height:300px;overflow-y:scroll;padding:10px;"></div>
-
-    <script>
-        let ws = null;
-        let username = "Аноним";
-
-        function connectWebSocket() {
-            username = document.getElementById("username").value || "Аноним";
-
-            // Подключаемся к WebSocket
-            ws = new WebSocket("ws://" + window.location.host + "/ws");
-
-            ws.onopen = function() {
-                addMessage("Подключено к чату как: " + username);
-                document.getElementById("messageInput").disabled = false;
-                document.getElementById("sendBtn").disabled = false;
-            };
-
-            ws.onmessage = function(event) {
-                addMessage(event.data);
-            };
-
-            ws.onerror = function(error) {
-                addMessage("Ошибка подключения");
-            };
-
-            ws.onclose = function() {
-                addMessage("Отключено от чата");
-                document.getElementById("messageInput").disabled = true;
-                document.getElementById("sendBtn").disabled = true;
-            };
-        }
-
-        function sendMessage() {
-            const input = document.getElementById("messageInput");
-            const message = input.value.trim();
-
-            if (message && ws) {
-                // Отправляем имя и сообщение через двоеточие
-                ws.send(username + ": " + message);
-                input.value = "";
-            }
-        }
-
-        function addMessage(text) {
-            const chatDiv = document.getElementById("chatMessages");
-            const messageDiv = document.createElement("div");
-            messageDiv.textContent = text;
-            chatDiv.appendChild(messageDiv);
-            chatDiv.scrollTop = chatDiv.scrollHeight;
-        }
-
-        // Отправка сообщения по Enter
-        document.getElementById("messageInput").addEventListener("keypress", function(e) {
-            if (e.key === "Enter") {
-                sendMessage();
-            }
-        });
-    </script>
-</body>
-</html>
-"""
-
+HTML_FILE_PATH = Path("templates/chat.html")
 
 @app.get("/")
 async def get_chat_page():
-    return HTMLResponse(html_page)
+    if HTML_FILE_PATH.exists():
+        html_content = HTML_FILE_PATH.read_text(encoding="utf-8")
+        return HTMLResponse(html_content)
+    else:
+        return HTMLResponse("<h1>Файл chat.html не найден</h1>")
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -111,4 +37,3 @@ async def websocket_endpoint(websocket: WebSocket):
     finally:
         if websocket in connected_users:
             connected_users.remove(websocket)
-
